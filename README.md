@@ -1,7 +1,7 @@
 # geometric-optics
 A simple Python script for tracing rays through geometric optical elements
 
-# code
+# example code
 ```python
 scene = Scene()
 
