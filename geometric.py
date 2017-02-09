@@ -11,7 +11,7 @@ rcParams['figure.dpi'] = 200
 rcParams['axes.xmargin'] = 0.05
 rcParams['axes.ymargin'] = 0.05
 
-class LightRay:
+class Ray:
     """Optical ray handles height and angle"""
     def __init__(self, height, angle):
         self.height = height
@@ -19,7 +19,7 @@ class LightRay:
         self.v = numpy.array((height, angle), ndmin=2).T
 
     def __repr__(self):
-        return "({}, {})".format(self.height, self.angle)
+        return "Ray({}, {})".format(self.height, self.angle)
 
 
 class RayTransferMatrix:
@@ -31,7 +31,7 @@ class RayTransferMatrix:
     def dot(self, ray):
         """Apply transfer matrix to ray"""
         v = self.matrix.dot(ray.v)
-        return LightRay(v[0][0], v[1][0])
+        return Ray(v[0][0], v[1][0])
         
 
 
@@ -58,13 +58,18 @@ class Scene:
     def __init__(self):
         self.rays = []
         self.elements = []
+        self.distance = 0
 
         
-    def add(self, distance, item):
-        if isinstance(item, LightRay):
-            self.rays.append((distance, item))
+    def add(self, item):
+        if isinstance(item, Ray):
+            self.rays.append((self.distance, item))
         else:
-            self.elements.append((distance, item))
+            if isinstance(item, FreeSpace):
+                self.elements.append((self.distance, item))
+                self.distance += item.distance
+            else:
+                self.elements.append((self.distance, item))
 
             
     def view(self):
@@ -94,15 +99,15 @@ class Scene:
             p.plot(*zip(*path), zorder=10)
 
 
-        p.xlabel('Distance [cm]')
-        p.ylabel('Radius [cm]')
+        p.xlabel('Distance [mm]')
+        p.ylabel('Radius [mm]')
         p.grid('on')
         p.savefig('example.png')
         p.show()
         
 
         
-    def display(self, z, element, radius=2):
+    def display(self, z, element, radius=20):
         if isinstance(element, Lens):
             self.ax.add_patch(patches.FancyArrowPatch((z, -radius),
                                                       (z, radius),
@@ -111,21 +116,35 @@ class Scene:
                                                       lw=2,
                                                       color='blue'))
             
-            t = self.ax.text(z, radius+0.15, 'f = {} cm'.format(element.focus),
+            t = self.ax.text(z, radius+3, 'f = {} mm'.format(element.focus),
                              horizontalalignment='center',
                              verticalalignment='center')
             t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='black'))
 
 
 if __name__ == '__main__':
-    scene = Scene()
 
-    scene.add(0, LightRay(0, 0.1))
-    scene.add(0, LightRay(0.5, 0))
-    scene.add(0, FreeSpace(10))
-    scene.add(10, Lens(5))
-    scene.add(10, FreeSpace(20))
-    scene.add(30, Lens(5))
-    scene.add(30, FreeSpace(10))
+    # scene will hold the optical rays and elements
+    scene = Scene()
     
+    # rays are specified by their height [mm] and angle [radians] w.r.t. the optical axis
+    ray1 = Ray(height=0, angle=0.1)
+    ray2 = Ray(height=5, angle=0)
+    
+    # each item that we create must be added it to the scene
+    scene.add(ray1)
+    scene.add(ray2)
+    
+    # let's add a lens that is 100mm after the rays by using FreeSpace(100)
+    scene.add(FreeSpace(100))
+    scene.add(Lens(focus=50))
+    
+    # and add another lens of the same focal length 200mm after the first lens
+    scene.add(FreeSpace(200))
+    scene.add(Lens(focus=50))
+    
+    # finally let's allow the rays to propagate 100mm past the second lens
+    scene.add(FreeSpace(100))
+    
+    # let's view what we have made
     scene.view()
