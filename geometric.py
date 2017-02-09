@@ -4,11 +4,12 @@ import numpy
 from matplotlib import pyplot as p
 import matplotlib.patches as patches
 from matplotlib import rcParams
+from cycler import cycler
 
 # higher resolution figures
 rcParams['figure.dpi'] = 200
-rcParams['axes.xmargin'] = 0.1
-rcParams['axes.ymargin'] = 0.1
+rcParams['axes.xmargin'] = 0.05
+rcParams['axes.ymargin'] = 0.05
 
 class LightRay:
     """Optical ray handles height and angle"""
@@ -43,7 +44,7 @@ class FreeSpace:
 class Lens:
     def __init__(self, focus):
         self.focus = focus
-        self.m = RayTransferMatrix(1, 0, -1 / focus, 1)
+        self.m = RayTransferMatrix(1, 0, -1.0 / focus, 1)
 
 
 class FlatMirror:
@@ -69,6 +70,7 @@ class Scene:
     def view(self):
         self.fig = p.figure()
         self.ax = self.fig.add_subplot(111)
+        self.ax.set_prop_cycle(cycler('color', ['r', 'g', 'c', 'm']))
 
         self.ax.axhline(ls='--', color='k')
         
@@ -86,38 +88,44 @@ class Scene:
                     
                 ray = element.m.dot(ray)
                 path.append((z, ray.height))
-                print(path)
+                # print(path)
 
 
-            p.plot(*zip(*path))
+            p.plot(*zip(*path), zorder=10)
 
 
-        p.xlabel('Distance')
-        p.ylabel('Radius')
-
+        p.xlabel('Distance [cm]')
+        p.ylabel('Radius [cm]')
+        p.grid('on')
+        p.savefig('example.png')
         p.show()
         
 
         
-    def display(self, z, element, radius=1):
+    def display(self, z, element, radius=2):
         if isinstance(element, Lens):
             self.ax.add_patch(patches.FancyArrowPatch((z, -radius),
                                                       (z, radius),
                                                       arrowstyle='<->',
                                                       mutation_scale=40,
-                                                      lw=2))
+                                                      lw=2,
+                                                      color='blue'))
+            
+            t = self.ax.text(z, radius+0.15, 'f = {} cm'.format(element.focus),
+                             horizontalalignment='center',
+                             verticalalignment='center')
+            t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='black'))
 
 
 if __name__ == '__main__':
     scene = Scene()
-    r = LightRay(0, 0.1)
-    d = FreeSpace(10)
-    l = Lens(2)
+
     scene.add(0, LightRay(0, 0.1))
+    scene.add(0, LightRay(0.5, 0))
     scene.add(0, FreeSpace(10))
-    scene.add(10, Lens(2))
-    scene.add(10, FreeSpace(10))
-    scene.add(20, Lens(2))
-    scene.add(20, FreeSpace(10))
+    scene.add(10, Lens(5))
+    scene.add(10, FreeSpace(20))
+    scene.add(30, Lens(5))
+    scene.add(30, FreeSpace(10))
     
     scene.view()
