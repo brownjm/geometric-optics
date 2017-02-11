@@ -1,5 +1,20 @@
 # geometric-optics
-A simple Python script for tracing rays through geometric optical elements
+
+A simple Python module for tracing rays through a series of geometric
+optical elements. Rays and lenses can be added to a scene sequentially
+and the resulting ray paths can be viewed. It is intended as a
+teaching illustration to help students visualize how rays propagate
+through simple optical system.
+
+Internally, rays are traced through optical elements using [ray
+transfer matrix
+analysis](https://en.wikipedia.org/wiki/Ray_transfer_matrix_analysis),
+where each optical element is represented by a 2x2 matrix operating on
+a 2x1 vector representing the ray's height and angle. This general
+formalism allows for new optical elements to be added to the program
+easily, and the same classes of optical elements used for propagating
+gaussian beams.
+
 
 # example code
 ```python
