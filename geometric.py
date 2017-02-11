@@ -101,8 +101,6 @@ class Scene:
             path = self._trace(distance, ray)
             plt.plot(*zip(*path), zorder=10)
 
-
-        plt.savefig('example.png')
         plt.show()
         
   
